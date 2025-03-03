@@ -1,11 +1,20 @@
 import java.io.*;
 
 public class R14_SER00_J {
-    public static Object deserialize(byte[] data) throws IOException, ClassNotFoundException {
+
+    // Non-Compliant Version
+    public static Object nonCompliant(byte[] data) throws IOException, ClassNotFoundException {
         ByteArrayInputStream bis = new ByteArrayInputStream(data);
         ObjectInputStream ois = new ObjectInputStream(bis);
-        
-        // Apply a security filter to prevent deserializing malicious classes
+        return ois.readObject(); // Unsafe deserialization
+    }
+
+    // Compliant Version
+    public static Object compliant(byte[] data) throws IOException, ClassNotFoundException {
+        ByteArrayInputStream bis = new ByteArrayInputStream(data);
+        ObjectInputStream ois = new ObjectInputStream(bis);
+
+        // Security filter to prevent deserializing malicious classes
         ois.setObjectInputFilter(info -> 
             info.serialClass() != null && info.serialClass().getName().startsWith("java.")
                 ? ObjectInputFilter.Status.ALLOWED
@@ -13,5 +22,23 @@ public class R14_SER00_J {
         );
 
         return ois.readObject();
+    }
+
+    public static void main(String[] args) {
+        byte[] serializedData = {}; // Example serialized data
+
+        System.out.println("Running Non-Compliant Code:");
+        try {
+            System.out.println(nonCompliant(serializedData));
+        } catch (Exception e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+
+        System.out.println("\nRunning Fixed Code:");
+        try {
+            System.out.println(compliant(serializedData));
+        } catch (Exception e) {
+            System.err.println("Error: " + e.getMessage());
+        }
     }
 }
